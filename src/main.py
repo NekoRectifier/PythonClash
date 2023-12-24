@@ -9,11 +9,12 @@ args = parser.parse_args()
 
 
 if __name__ == "__main__":
-    print("starting python clash")
     input_func = args.function 
 
     if input_func == 'update':
         print("starting update now...")
+        function.update()
+    elif input_func == 'setup':
         function.setup()
     elif input_func == 'start':
         print("start clash core")
