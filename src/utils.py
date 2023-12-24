@@ -17,19 +17,19 @@ def get_shell_type():
 def get_curr_username():
     return getpass.getuser()
 
-def append_file(source_file, target_file):
+def append_file(contents, target_file):
     # 打开源文件和目标文件
-    with open(source_file, 'r') as source, open(target_file, 'a') as target:
-        # 读取源文件的内容
-        content = source.read()
-        
-        # 将源文件的内容追加到目标文件的末尾
-        target.write(content)
-        
-    # 关闭源文件和目标文件
-    source.close()
+    with open(target_file, 'a') as target:
+        target.write(contents)
     target.close()
 
-# 指定源文件和目标文件的路径
-source_file_path = 'path/to/source/file.txt'
-target_file_path = 'path/to/target/file.txt'
+def check_string_in_file(file_path, target_string):
+    # 打开文件并读取内容
+    with open(file_path, 'r') as file:
+        content = file.read()
+        # 搜索目标字符串
+        if target_string not in content:
+            return False
+        else:
+            return True
+    file.close()
