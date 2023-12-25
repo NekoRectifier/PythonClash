@@ -1,5 +1,6 @@
 import os
 import getpass
+from loguru import logger
 
 def get_shell_type():
     shell = os.environ.get('SHELL')
@@ -33,3 +34,16 @@ def check_string_in_file(file_path, target_string):
         else:
             return True
     file.close()
+
+def is_yml_valid(yml_obj: dict):
+    if yml_obj['proxies'] is not None and yml_obj['proxy-groups'] is not None and yml_obj['rules'] is not None:
+        return True
+    else: 
+        return False
+    
+def add_yml_custom_options(_dict: dict, _yml_data: dict):
+    for key in _dict.keys():
+        if _yml_data[key] is not _dict[key]:
+            _yml_data[key] = _dict[key]
+            logger.info("Key " + key + " is updated to " + _dict[key] + " ...")
+    logger.info("yml custom options has been added")

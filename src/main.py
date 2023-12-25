@@ -31,15 +31,24 @@ else:
 
 
 if __name__ == "__main__":
+
+    # only valid with true log files
+    logger.add(
+        format="{time}|{level}|{message}",
+        level='INFO',
+        sink=exec_dir + "/log/service.log"
+    )
+
     input_func = args.function
 
     if args.url is not None:
         logger.info("subscribe url updated...")
         conf['sub_url'] = args.url
+        with open(_conf_path, 'w') as cf:
+            json.dump(conf, cf)
 
     if input_func == 'update':
-        print("starting update now...")
-        function.update()
+        function.update(conf, exec_dir)
     elif input_func == 'setup':
         function.setup(exec_dir)
     elif input_func == 'start':
