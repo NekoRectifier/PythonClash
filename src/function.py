@@ -96,7 +96,7 @@ def update(_conf: dict, _dir):
 def start(_dir):
     clash_bin_path: str = _dir + "/bin/clash-" + utils.get_cpu_arch()
     if os.path.exists(clash_bin_path):
-        ins_indks = utils.detect_instance(clash_bin_path.rpartition('/'))
+        ins_indks = utils.detect_instance(clash_bin_path.rpartition('/')[2])
         if len(ins_indks) == 0:
             logger.info("Starting clash core...")
             subprocess.run("nohup " + clash_bin_path + " -d " + _dir + "/conf > " + _dir + "/log/clash.log 2>&1 &", shell=True)
