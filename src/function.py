@@ -4,26 +4,37 @@ import os
 import urllib.request
 import urllib.error
 import yaml
+import subprocess
 
 def setup(_dir):
+    _mmdb_path = _dir + "/conf/Country.mmdb"
     shell_type = utils.get_shell_type()
+
+
     if shell_type == 'Fish':
         _path = "/home/" + utils.get_curr_username() + "/.config/fish/config.fish"
         _config_valid = os.path.exists(_path) 
 
         if _config_valid and not utils.check_string_in_file(_path, "PythonClash"):
             utils.append_file("source " + _dir + "/scripts/PythonClash.fish", _path)
-            logger.info("adding function to shell config file...")
+            logger.info("Adding function to shell config file...")
         elif _config_valid and utils.check_string_in_file(_path, "PythonClash"):
-            logger.warning("functions had been added to the shell config file!")
+            logger.warning("Functions had been added to the shell config file, ignoring!")
         else:
-            logger.error("config file is not in default pos")
+            logger.error("fish config file is not in default pos")
     else:
         logger.error("not supported to set shell functions.")
+    
+    if not os.path.exists(_mmdb_path):
+        # TODO mmdb validity check
+        logger.warning("No GeoIP Database detected in conf folder")
+        logger.info("Downloading database now...")
+        subprocess.run("wget https://mirror.ghproxy.com/https://github.com/Dreamacro/maxmind-geoip/releases/latest/download/Country.mmdb -O " + _mmdb_path , shell=True)
+        logger.info("Finished database downloading")
 
-def update(_conf: dict, _main_dir):
+def update(_conf: dict, _dir):
     _yml_content = {}
-    _config_path = _main_dir + "/conf/config.yaml"
+    _config_path = _dir + "/conf/config.yaml"
 
     try:
         if _conf.get('sub_url') is not None:
@@ -56,7 +67,7 @@ def update(_conf: dict, _main_dir):
         options = {
             'mode': 'Rule',
             'external-controller': '0.0.0.0:9090',
-            'external-ui': _main_dir + "/dashboard/public",
+            'external-ui': _dir + "/dashboard/public",
             'secret': _secret,
         }
         utils.add_yml_custom_options(options, _yml_content)
