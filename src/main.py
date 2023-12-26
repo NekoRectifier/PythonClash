@@ -24,11 +24,12 @@ _conf_path: str = exec_dir + "/conf/conf.json"
 conf:dict[str, str] = {}
 
 if not os.path.exists(_conf_path):
+    logger.warning("There's no conf file in conf/ folder, creating...")
     with open(_conf_path, 'w') as f:
         f.write("{}")
     f.close()
 else:
-    with open(_conf_path, 'w+') as f:
+    with open(_conf_path, 'r+') as f:
         _raw: str = f.read()
         if _raw != "":
             conf = json.loads(_raw)
@@ -50,7 +51,7 @@ if __name__ == "__main__":
     input_func = args.function
 
     if args.url is not None:
-        logger.info("subscribe url updated...")
+        logger.info("new subscribe url has been wrote to file")
         conf['sub_url'] = args.url
         with open(_conf_path, 'w') as cf:
             json.dump(conf, cf)
@@ -62,11 +63,4 @@ if __name__ == "__main__":
     elif input_func == 'start':
         function.start(exec_dir)
     else:
-        print('usage')
-
-    # saving conf
-    with open(_conf_path, 'w') as cf:
-        json.dump(conf, cf)
-        
-
-# catch when program exits, to save conf to file
+        print('usage') 
