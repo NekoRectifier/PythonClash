@@ -4,10 +4,18 @@ from loguru import logger
 import json
 import os
 
-parser = argparse.ArgumentParser(usage="\n\tpython3 main.py {setup, update, start, stop, restart}\n")
+parser = argparse.ArgumentParser(usage="\n\tpython3 main.py {setup, update, start, stop}\n")
 
-parser.add_argument('function')
-parser.add_argument('-u', '--url')
+parser.add_argument(
+    'function',
+    type=str,
+    choices=["update", "setup", "start", "stop"]
+)
+parser.add_argument(
+    '-u', '--url',
+    type=str,
+    help="attach your subscription url here to update your config.yaml"
+)
 args = parser.parse_args()
 
 exec_dir: str = os.path.dirname(__file__).rpartition("/")[0]
