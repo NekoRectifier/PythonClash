@@ -4,7 +4,7 @@ from loguru import logger
 import platform
 import psutil
 
-def get_shell_type():
+def get_shell_type() -> str:
     shell = os.environ.get('SHELL')
     
     if shell:
@@ -17,16 +17,16 @@ def get_shell_type():
     
     return 'Unknown'
 
-def get_curr_username():
+def get_curr_username() -> str:
     return getpass.getuser()
 
-def append_file(contents, target_file):
+def append_file(contents, target_file) -> None:
     # 打开源文件和目标文件
     with open(target_file, 'a') as target:
         target.write(contents)
     target.close()
 
-def check_string_in_file(file_path, target_string):
+def check_string_in_file(file_path, target_string) -> bool:
     # 打开文件并读取内容
     with open(file_path, 'r') as file:
         content = file.read()
@@ -35,20 +35,20 @@ def check_string_in_file(file_path, target_string):
             return False
         else:
             return True
-    file.close()
 
-def is_yml_valid(yml_obj: dict):
+def is_yml_valid(yml_obj: dict) -> bool:
     if yml_obj['proxies'] is not None and yml_obj['proxy-groups'] is not None and yml_obj['rules'] is not None:
         return True
     else: 
         return False
     
-def add_yml_custom_options(_dict: dict, _yml_data: dict):
+def add_yml_custom_options(_dict: dict, _yml_data: dict) -> None:
     for key in _dict.keys():
-        if _yml_data[key] is not _dict[key]:
+        if _yml_data.get(key) is not _dict[key]:
+            # using .get to avoid KeyError when specific key is not exist in the config dict
             _yml_data[key] = _dict[key]
-            logger.info("Key " + key + " is updated to " + _dict[key] + " ...")
-    logger.info("yml custom options has been added")
+            logger.info("Key '" + key + "' is updated to " + _dict[key] + " ...")
+    logger.info("All custom options has been added to config file")
 
 def get_cpu_arch() -> str:
     name = platform.machine()

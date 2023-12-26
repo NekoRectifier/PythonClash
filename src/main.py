@@ -22,11 +22,14 @@ exec_dir: str = os.path.dirname(__file__).rpartition("/")[0]
 _conf_path: str = exec_dir + "/conf/conf.json"
 
 conf:dict[str, str] = {}
+conf['exec_dir'] = exec_dir
+# conf['conf_json'] = exec_dir + "/conf/conf.json"
+# conf['config_yaml'] = exec_dir
 
 if not os.path.exists(_conf_path):
-    logger.warning("There's no conf file in conf/ folder, creating...")
+    logger.warning("There's no conf file in 'conf/' folder, creating...")
     with open(_conf_path, 'w') as f:
-        f.write("{}")
+        f.write(json.dumps(conf))
     f.close()
 else:
     with open(_conf_path, 'r+') as f:
@@ -34,8 +37,7 @@ else:
         if _raw != "":
             conf = json.loads(_raw)
         else:
-            logger.debug('conf.json is empty')
-            f.write("{}")
+            f.write(json.dumps(conf))
     f.close()
 
 

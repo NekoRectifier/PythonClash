@@ -44,7 +44,7 @@ def setup(_dir):
 
 def update(_conf: dict, _dir):
     _yml_content = {}
-    _config_path = _dir + "/conf/config.yaml"
+    _config_path: str = _dir + "/conf/config.yaml"
 
     try:
         if _conf.get('sub_url') is not None:
@@ -94,7 +94,7 @@ def update(_conf: dict, _dir):
         exit(1)
     
 def start(_dir):
-    clash_bin_path = _dir + "/bin/clash-" + utils.get_cpu_arch()
+    clash_bin_path: str = _dir + "/bin/clash-" + utils.get_cpu_arch()
     if os.path.exists(clash_bin_path):
         ins_indks = utils.detect_instance(clash_bin_path.rpartition('/'))
         if len(ins_indks) == 0:
