@@ -17,9 +17,9 @@ def setup(_dir):
 
         if _config_valid and not utils.check_string_in_file(_path, "PythonClash"):
             utils.append_file("source " + _dir + "/scripts/PythonClash.fish", _path)
-            logger.info("Adding function to shell config file...")
+            logger.info("Finished adding function to shell config file...")
         elif _config_valid and utils.check_string_in_file(_path, "PythonClash"):
-            logger.warning("Functions had been added to the shell config file, ignoring!")
+            logger.info("Functions had been added to the shell config")
         else:
             logger.error("fish config file is not in default pos")
     else:
@@ -29,8 +29,18 @@ def setup(_dir):
         # TODO mmdb validity check
         logger.warning("No GeoIP Database detected in conf folder")
         logger.info("Downloading database now...")
-        subprocess.run("wget https://mirror.ghproxy.com/https://github.com/Dreamacro/maxmind-geoip/releases/latest/download/Country.mmdb -O " + _mmdb_path , shell=True)
+        try:
+            subprocess.run("wget https://mirror.ghproxy.com/https://github.com/Dreamacro/maxmind-geoip/releases/latest/download/Country.mmdb -O " + _mmdb_path,
+                            shell=True,
+                            check=True,
+                            stderr=subprocess.DEVNULL)
+        except subprocess.CalledProcessError:
+            logger.warning("'wget' is not usable, try to download with builit in urllib...")
+            urllib.request.urlretrieve("https://mirror.ghproxy.com/https://github.com/Dreamacro/maxmind-geoip/releases/latest/download/Country.mmdb", _mmdb_path)
         logger.info("Finished database downloading")
+    else:
+        logger.info("GeoIP Database exists")
+    logger.info("PythonClash Setup finished")
 
 def update(_conf: dict, _dir):
     _yml_content = {}
