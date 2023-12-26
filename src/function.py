@@ -82,6 +82,17 @@ def update(_conf: dict, _dir):
         logger.critical("downloaded config is corrupted!")
         exit(1)
     
-
+def start(_dir):
+    clash_bin_path = _dir + "/bin/clash-" + utils.get_cpu_arch()
+    if os.path.exists(clash_bin_path):
+        ins_indk: int = utils.detect_instance("clash-")
+        if ins_indk == -1:
+            logger.info("Starting clash core...")
+            subprocess.run("nohup " + clash_bin_path + " -d " + _dir + "/conf &> " + _dir + "/log/clash.log", shell=True)
+        else:
+            logger.warning("Another clash instance is already running, killing...")
+            subprocess.run("kill -9 " + str(ins_indk), shell=True, check=True)
+    else:
+        logger.critical("Clash binary:" + clash_bin_path + " is not exist, exiting!")
+        exit(1)
     
-

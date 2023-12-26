@@ -1,6 +1,8 @@
 import os
 import getpass
 from loguru import logger
+import platform
+import psutil
 
 def get_shell_type():
     shell = os.environ.get('SHELL')
@@ -47,3 +49,21 @@ def add_yml_custom_options(_dict: dict, _yml_data: dict):
             _yml_data[key] = _dict[key]
             logger.info("Key " + key + " is updated to " + _dict[key] + " ...")
     logger.info("yml custom options has been added")
+
+def get_cpu_arch() -> str:
+    name = platform.machine()
+    if name == 'AMD64':
+        return 'windows-amd64'
+    elif name == 'x86_64':
+        return 'linux-amd64'
+    elif name == 'aarch64':
+        return name
+    else:
+        logger.error("Can't determine current cpu architechure, exiting...")
+        exit(1)
+
+def detect_instance(process_loc) -> int:
+    for pid in psutil.process_iter():
+        if pid.name().find(process_loc) != -1 or pid.pid == process_loc:
+            return pid.pid
+    return -1

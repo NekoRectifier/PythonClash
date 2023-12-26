@@ -1,5 +1,8 @@
 *.json
 conf/config.yaml
+conf/*.mmdb
+*/nohup.out
+*/cache.db
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

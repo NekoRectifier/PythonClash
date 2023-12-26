@@ -10,10 +10,10 @@ parser.add_argument('function')
 parser.add_argument('-u', '--url')
 args = parser.parse_args()
 
-exec_dir = os.path.dirname(__file__).rpartition("/")[0]
-_conf_path = exec_dir + "/conf/conf.json"
+exec_dir: str = os.path.dirname(__file__).rpartition("/")[0]
+_conf_path: str = exec_dir + "/conf/conf.json"
 
-conf = {}
+conf:dict[str, str] = {}
 
 if not os.path.exists(_conf_path):
     with open(_conf_path, 'w') as f:
@@ -21,7 +21,7 @@ if not os.path.exists(_conf_path):
     f.close()
 else:
     with open(_conf_path, 'w+') as f:
-        _raw = f.read()
+        _raw: str = f.read()
         if _raw != "":
             conf = json.loads(_raw)
         else:
@@ -52,7 +52,7 @@ if __name__ == "__main__":
     elif input_func == 'setup':
         function.setup(exec_dir)
     elif input_func == 'start':
-        print("start clash core")
+        function.start(exec_dir)
     else:
         print('usage')
 
