@@ -88,7 +88,7 @@ def start(_dir):
         ins_indk: int = utils.detect_instance("clash-")
         if ins_indk == -1:
             logger.info("Starting clash core...")
-            subprocess.run("nohup " + clash_bin_path + " -d " + _dir + "/conf &> " + _dir + "/log/clash.log", shell=True)
+            subprocess.run("nohup " + clash_bin_path + " -d " + _dir + "/conf > " + _dir + "/log/clash.log 2>&1 &", shell=True)
         else:
             logger.warning("Another clash instance is already running, killing...")
             subprocess.run("kill -9 " + str(ins_indk), shell=True, check=True)
