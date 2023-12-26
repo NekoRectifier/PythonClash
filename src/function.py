@@ -41,10 +41,11 @@ def update(_conf: dict, _dir):
             logger.info("updating config now...")
             urllib.request.urlretrieve(str(_conf.get('sub_url')), _config_path)
         else:
-            logger.error("URL haven't been set. Exiting...")
+            logger.error("Subscription URL haven't been set. Exiting...")
             exit(1)
     except urllib.error.URLError:
         logger.error('URL cannot be connected')
+        exit(1)
 
     with open(_config_path) as f:
         _secret = ''
@@ -57,11 +58,11 @@ def update(_conf: dict, _dir):
     if utils.is_yml_valid(_yml_content):
         logger.debug("downloaded config seems valid")
 
-        if _conf['secret'] is None:
+        if _conf.get("secret") is None:
             # defult secret is 'admin'
             _secret = 'admin'
         else:
-            _secret: str = _conf["secret"]
+            _secret: str = str(_conf.get("secret"))
 
         # custom settings
         options = {
@@ -75,7 +76,7 @@ def update(_conf: dict, _dir):
         # saving yaml to file now
         with open(_config_path, 'w') as f:
             yaml.dump(_yml_content, f)
-            logger.info("modifications on config yaml has been made to file")
+            logger.info("modifications on config yaml has been made to file, you may start the clash now")
 
     else:
         # TODO: base64 config file support
