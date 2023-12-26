@@ -62,8 +62,9 @@ def get_cpu_arch() -> str:
         logger.error("Can't determine current cpu architechure, exiting...")
         exit(1)
 
-def detect_instance(process_loc) -> int:
+def detect_instance(process_loc) -> list:
+    _target_pids = []
     for pid in psutil.process_iter():
         if pid.name().find(process_loc) != -1 or pid.pid == process_loc:
-            return pid.pid
-    return -1
+            _target_pids.append(pid.pid)
+    return _target_pids

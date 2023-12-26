@@ -85,22 +85,23 @@ def update(_conf: dict, _dir):
 def start(_dir):
     clash_bin_path = _dir + "/bin/clash-" + utils.get_cpu_arch()
     if os.path.exists(clash_bin_path):
-        ins_indk: int = utils.detect_instance("clash-")
-        if ins_indk == -1:
+        ins_indks = utils.detect_instance(clash_bin_path.rpartition('/'))
+        if len(ins_indks) == 0:
             logger.info("Starting clash core...")
             subprocess.run("nohup " + clash_bin_path + " -d " + _dir + "/conf > " + _dir + "/log/clash.log 2>&1 &", shell=True)
         else:
             logger.warning("Another clash instance is already running, killing...")
-            subprocess.run("kill -9 " + str(ins_indk), shell=True, check=True)
+            for pid in ins_indks:
+                subprocess.run("kill -9 " + str(pid), shell=True, check=True)
     else:
         logger.critical("Clash binary:" + clash_bin_path + " is not exist, exiting!")
         exit(1)
 
 def stop():
-    ins_indk :int = utils.detect_instance("clash-")
-    if ins_indk == -1:
+    ins_indks = utils.detect_instance("clash-" + utils.get_cpu_arch())
+    if len(ins_indks) == 0:
         logger.error("No Running clash instance, exiting...")
     else:
-        subprocess.run("kill -9 " + str(ins_indk), shell=True, check=True)
+        for pid in ins_indks:
+                subprocess.run("kill -9 " + str(pid), shell=True, check=True)
         logger.info("All running clash instance has been closed")
-        
