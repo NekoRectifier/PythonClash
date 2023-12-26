@@ -61,7 +61,7 @@ def update(_conf: dict, _dir):
             # defult secret is 'admin'
             _secret = 'admin'
         else:
-            _secret = _conf["secret"]
+            _secret: str = _conf["secret"]
 
         # custom settings
         options = {
@@ -95,4 +95,12 @@ def start(_dir):
     else:
         logger.critical("Clash binary:" + clash_bin_path + " is not exist, exiting!")
         exit(1)
-    
+
+def stop():
+    ins_indk :int = utils.detect_instance("clash-")
+    if ins_indk == -1:
+        logger.error("No Running clash instance, exiting...")
+    else:
+        subprocess.run("kill -9 " + str(ins_indk), shell=True, check=True)
+        logger.info("All running clash instance has been closed")
+        
