@@ -60,7 +60,7 @@ function proxy_off(){
         f_bashscript.close()
 
     if shell_type == "Fish":
-        _path: str = os.path.expandvars('HOME') + "/.config/fish/config.fish"
+        _path: str = os.path.expandvars('$HOME') + "/.config/fish/config.fish"
         _config_valid: bool = os.path.exists(_path)
 
         if _config_valid and not utils.check_string_in_file(_path, "PythonClash.fish"):
@@ -157,7 +157,7 @@ def update(conf_dict: dict):
 
 def start(conf_dict):
     _dir:str = str(conf_dict['config_dir'])
-    clash_bin_path: str = _dir + "/bin/clash-" + utils.get_cpu_arch()
+    clash_bin_path: str = "/usr/local/bin/mihomo"
     if os.path.exists(clash_bin_path):
         ins_indks = utils.detect_instance(clash_bin_path.rpartition("/")[2])
         if len(ins_indks) == 0:
@@ -177,7 +177,7 @@ def start(conf_dict):
             for pid in ins_indks:
                 subprocess.run("kill -9 " + str(pid), shell=True, check=True)
     else:
-        logger.critical("Clash binary:" + clash_bin_path + " is not exist, exiting!")
+        logger.critical("Clash binary at " + clash_bin_path + " is not exist, exiting!")
         exit(1)
 
 
