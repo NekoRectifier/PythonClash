@@ -3,6 +3,7 @@ import getpass
 from loguru import logger
 import platform
 import psutil
+import yaml
 
 def get_shell_type() -> str:
     shell = os.environ.get('SHELL')
@@ -36,11 +37,23 @@ def check_string_in_file(file_path, target_string) -> bool:
         else:
             return True
 
-def is_yml_valid(yml_obj: dict) -> bool:
-    if yml_obj['proxies'] is not None and yml_obj['proxy-groups'] is not None and yml_obj['rules'] is not None:
+def is_yml_valid(yml_obj) -> bool:
+    _obj: dict[str, str] = {}
+    if yml_obj is str:
+        with open(yml_obj, 'r') as f_yml:
+            _obj = yaml.load(f_yml.read(), yaml.FullLoader)
+        f_yml.close()
+    elif yml_obj is dict:
+        _obj = yml_obj
+    else:
+        logger.error("no valid input to 'is_yml_valid', exiting...")
+        exit(1)
+    
+    if _obj['proxies'] is not None and _obj['proxy-groups'] is not None and _obj['rules'] is not None:
         return True
     else: 
         return False
+    
     
 def add_yml_custom_options(_dict: dict, _yml_data: dict) -> None:
     for key in _dict.keys():
@@ -62,8 +75,8 @@ def get_cpu_arch() -> str:
         logger.error("Can't determine current cpu architechure, exiting...")
         exit(1)
 
-def detect_instance(process_loc) -> list:
-    _target_pids = []
+def detect_instance(process_loc) -> list[int]:
+    _target_pids: list[int] = []
     for pid in psutil.process_iter():
         if pid.name().find(process_loc) != -1 or pid.pid == process_loc:
             _target_pids.append(pid.pid)

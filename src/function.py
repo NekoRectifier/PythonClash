@@ -8,68 +8,28 @@ import subprocess
 
 
 def setup(conf_dict: dict):
+    # TODO: check if there's a sudo permission
     _mmdb_path: str = str(conf_dict["config_dir"] + "/conf/Country.mmdb")
+    _script_path: str = conf_dict["config_dir"] + "/scripts"
     shell_type: str = utils.get_shell_type()
 
     if not os.path.exists(conf_dict["config_dir"] + "/scripts/PythonClash.fish"):
         # Release Script Files
         logger.info("Creating shell script...")
-        os.makedirs(conf_dict["config_dir"] + "/scripts", exist_ok=True)
-        with open(
-            conf_dict["config_dir"] + "/scripts/PythonClash.fish", "w"
-        ) as f_fishscript:
-            f_fishscript.write(
-                """
-function proxy_on
-	export http_proxy=http://127.0.0.1:7890
-	export https_proxy=http://127.0.0.1:7890
-	export no_proxy=127.0.0.1,localhost
-	echo -e "\033[32m[√] 已开启代理\033[0m"
-end
-function proxy_off
-	set -e http_proxy
-	set -e https_proxy
-	set -e no_proxy
-	set -e all_proxy
-	set -e ALL_PROXY
-	echo -e "\033[31m[×] 已关闭代理\033[0m"
-end
-                """
-            )
-        f_fishscript.close()
-
-        with open(conf_dict["config_dir"] + "/scripts/PythonClash.bash", "w") as f_bashscript:
-            f_bashscript.write(
-                """
-function proxy_on() {
-	export http_proxy=http://127.0.0.1:7890
-	export https_proxy=http://127.0.0.1:7890
-	export no_proxy=127.0.0.1,localhost
-	echo -e "\033[32m[√] 已开启代理\033[0m"
-}
-function proxy_off(){
-	unset http_proxy
-	unset https_proxy
-	unset no_proxy
-	unset all_proxy
-	unset ALL_PROXY
-	echo -e "\033[31m[×] 已关闭代理\033[0m"
-}
-                """
-            )
-        f_bashscript.close()
+        os.makedirs(_script_path, exist_ok=True)
+        utils.release_script(_script_path)
 
     if shell_type == "Fish":
         _path: str = os.path.expandvars('$HOME') + "/.config/fish/config.fish"
         _config_valid: bool = os.path.exists(_path)
 
         if _config_valid and not utils.check_string_in_file(_path, "PythonClash.fish"):
-            utils.append_file("source " + conf_dict["config_dir"] + "/scripts/PythonClash.fish", _path)
+            utils.append_file("source " + os.path.join(_script_path, "/PythonClash.fish"), _path)
             logger.info("Finished adding function to shell config file...")
         elif _config_valid and utils.check_string_in_file(_path, "PythonClash.fish"):
             logger.info("Functions had been added to the shell config")
         else:
-            logger.error("Fish config file is not as intended, script in shell will not be usable!")
+            logger.error("Fish config file is not as intended, script in fish shell will not be usable!")
     else:
         logger.error("Not supported to set shell functions.")
 
@@ -117,8 +77,8 @@ def update(conf_dict: dict):
 
     with open(_config_path) as f:
         _secret = ""
-        _content = f.read()  # may have a ram problem
-        _yml_content = yaml.load(_content, yaml.FullLoader)
+        _content: str = f.read()  # may have a ram problem
+        _yml_content: dict = yaml.load(_content, yaml.FullLoader)
     f.close()
 
     # config validity check
@@ -133,7 +93,7 @@ def update(conf_dict: dict):
             _secret: str = str(conf_dict.get("secret"))
 
         # custom settings
-        options = {
+        options: dict[str, str] = {
             "mode": "Rule",
             "external-controller": "0.0.0.0:9090",
             # "external-ui": _dir + "/dashboard/public",
@@ -158,8 +118,15 @@ def update(conf_dict: dict):
 def start(conf_dict):
     _dir:str = str(conf_dict['config_dir'])
     clash_bin_path: str = "/usr/local/bin/mihomo"
+
+    if not utils.is_yml_valid(os.path.join(_dir, "config.yaml")):
+        logger.warning("No proper configuration in the config.yaml, probable no proxy functionality")
+
+    if not os.path.exists(str(conf_dict["config_dir"] + "/conf/Country.mmdb")):
+        logger.warning("No mmdb file, probable no proxy functionality")
+
     if os.path.exists(clash_bin_path):
-        ins_indks = utils.detect_instance(clash_bin_path.rpartition("/")[2])
+        ins_indks: list[int] = utils.detect_instance(clash_bin_path.rpartition("/")[2])
         if len(ins_indks) == 0:
             logger.info("Starting clash core...")
             subprocess.run(
@@ -173,16 +140,16 @@ def start(conf_dict):
                 shell=True,
             )
         else:
-            logger.warning("Another clash instance is already running, killing...")
-            for pid in ins_indks:
-                subprocess.run("kill -9 " + str(pid), shell=True, check=True)
+            logger.warning("Other clash instance is already running, killing...")
+            stop()
     else:
         logger.critical("Clash binary at " + clash_bin_path + " is not exist, exiting!")
         exit(1)
 
 
-def stop():
-    ins_indks = utils.detect_instance("clash-" + utils.get_cpu_arch())
+def stop(_target='mihomo'):
+    ins_indks: list[int] = utils.detect_instance(_target)
+
     if len(ins_indks) == 0:
         logger.error("No Running clash instance, exiting...")
     else:

@@ -3,7 +3,6 @@ import argparse
 from loguru import logger
 import json
 import os
-import getpass
 
 parser = argparse.ArgumentParser(usage="\n\tpython3 main.py {setup, update, start, stop}\n")
 
@@ -30,7 +29,7 @@ args = parser.parse_args()
 _marker = False
 def_conf_path: str =  os.path.join(os.path.expandvars('$HOME'), '.config', 'PythonClash')
 conf_path = ""
-conf_dict = {}
+conf_dict: dict[str, str] = {}
 
 if args.dir is not None:
     logger.info("Using custom config dir, writing now...")
