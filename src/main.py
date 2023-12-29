@@ -36,11 +36,7 @@ if args.dir is not None:
     logger.info("Using custom config dir, writing now...")
     _abs_custom_dir = str(os.path.abspath(args.dir))
     if os.path.exists(_abs_custom_dir):
-        conf_dict['config_dir'] = _abs_custom_dir
-        # with open(args.dir, 'w') as f_conf:
-        #     f_conf.write(json.dumps(conf_dict))
         conf_path: str = _abs_custom_dir
-        #     # handmade json
     else:
         logger.critical("Designated dir is not reachable, do not use any short like '~' ")
         exit(1)
@@ -61,6 +57,7 @@ if _marker:
     # f_conf.close()
     conf_path = def_conf_path
 
+conf_dict['config_dir'] = conf_path
 
 if __name__ == "__main__":
 
@@ -87,7 +84,7 @@ if __name__ == "__main__":
     else:
         print('usage') 
 
-with open(conf_path, 'w') as f_conf:
+with open(os.path.join(conf_path, "conf.json"), 'w') as f_conf:
     f_conf.write(json.dumps(conf_dict))
 f_conf.close()
 # lastly save the configuration to the json file

@@ -8,15 +8,15 @@ import subprocess
 
 
 def setup(conf_dict: dict):
-    _mmdb_path: str = str(conf_dict["conf_dir"] + "/conf/Country.mmdb")
+    _mmdb_path: str = str(conf_dict["config_dir"] + "/conf/Country.mmdb")
     shell_type: str = utils.get_shell_type()
 
-    if not os.path.exists(conf_dict["conf_dir"] + "/scripts/PythonClash.fish"):
+    if not os.path.exists(conf_dict["config_dir"] + "/scripts/PythonClash.fish"):
         # Release Script Files
         logger.info("Creating shell script...")
-        os.makedirs(conf_dict["conf_dir"] + "/scripts", exist_ok=True)
+        os.makedirs(conf_dict["config_dir"] + "/scripts", exist_ok=True)
         with open(
-            conf_dict["conf_dir"] + "/scripts/PythonClash.fish", "w"
+            conf_dict["config_dir"] + "/scripts/PythonClash.fish", "w"
         ) as f_fishscript:
             f_fishscript.write(
                 """
@@ -38,7 +38,7 @@ end
             )
         f_fishscript.close()
 
-        with open(conf_dict["conf_dir"] + "/scripts/PythonClash.bash", "w") as f_bashscript:
+        with open(conf_dict["config_dir"] + "/scripts/PythonClash.bash", "w") as f_bashscript:
             f_bashscript.write(
                 """
 function proxy_on() {
@@ -64,7 +64,7 @@ function proxy_off(){
         _config_valid: bool = os.path.exists(_path)
 
         if _config_valid and not utils.check_string_in_file(_path, "PythonClash.fish"):
-            utils.append_file("source " + conf_dict["conf_dir"] + "/scripts/PythonClash.fish", _path)
+            utils.append_file("source " + conf_dict["config_dir"] + "/scripts/PythonClash.fish", _path)
             logger.info("Finished adding function to shell config file...")
         elif _config_valid and utils.check_string_in_file(_path, "PythonClash.fish"):
             logger.info("Functions had been added to the shell config")
@@ -102,7 +102,7 @@ function proxy_off(){
 
 def update(conf_dict: dict):
     _yml_content = {}
-    _config_path: str = conf_dict['conf_dir'] + "/conf/config.yaml"
+    _config_path: str = conf_dict['config_dir'] + "/conf/config.yaml"
 
     try:
         if conf_dict.get("sub_url") is not None:
@@ -156,7 +156,7 @@ def update(conf_dict: dict):
 
 
 def start(conf_dict):
-    _dir = conf_dict['conf_dir']
+    _dir:str = str(conf_dict['config_dir'])
     clash_bin_path: str = _dir + "/bin/clash-" + utils.get_cpu_arch()
     if os.path.exists(clash_bin_path):
         ins_indks = utils.detect_instance(clash_bin_path.rpartition("/")[2])
