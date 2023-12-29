@@ -68,3 +68,48 @@ def detect_instance(process_loc) -> list:
         if pid.name().find(process_loc) != -1 or pid.pid == process_loc:
             _target_pids.append(pid.pid)
     return _target_pids
+
+def release_script(_target_dir):
+    with open(
+            os.path.join(_target_dir, "PythonClash.fish"), "w"
+        ) as f_fishscript:
+            f_fishscript.write(
+                """
+function proxy_on
+	export http_proxy=http://127.0.0.1:7890
+	export https_proxy=http://127.0.0.1:7890
+	export no_proxy=127.0.0.1,localhost
+	echo -e "\033[32m[√] 已开启代理\033[0m"
+end
+function proxy_off
+	set -e http_proxy
+	set -e https_proxy
+	set -e no_proxy
+	set -e all_proxy
+	set -e ALL_PROXY
+	echo -e "\033[31m[×] 已关闭代理\033[0m"
+end
+                """
+            )
+            f_fishscript.close()
+
+    with open(os.path.join(_target_dir, "PythonClash.bash"), "w") as f_bashscript:
+        f_bashscript.write(
+                """
+function proxy_on() {
+	export http_proxy=http://127.0.0.1:7890
+	export https_proxy=http://127.0.0.1:7890
+	export no_proxy=127.0.0.1,localhost
+	echo -e "\033[32m[√] 已开启代理\033[0m"
+}
+function proxy_off(){
+	unset http_proxy
+	unset https_proxy
+	unset no_proxy
+	unset all_proxy
+	unset ALL_PROXY
+	echo -e "\033[31m[×] 已关闭代理\033[0m"
+}
+                """
+            )
+        f_bashscript.close()
