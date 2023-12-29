@@ -28,7 +28,7 @@ args = parser.parse_args()
 
 # rewrite
 _marker = False
-def_conf_path: str =  os.path.join(os.path.expandvars('HOME'),'PythonClash')
+def_conf_path: str =  os.path.join(os.path.expandvars('$HOME'), '.config', 'PythonClash')
 conf_path = ""
 conf_dict = {}
 
@@ -75,6 +75,11 @@ if __name__ == "__main__":
         logger.info("new subscribe url has been wrote to file")
         conf_dict['sub_url'] = args.url
 
+    with open(os.path.join(conf_path, "conf.json"), 'w') as f_conf:
+        logger.debug("current config idr: " + conf_path)
+        f_conf.write(json.dumps(conf_dict))
+    f_conf.close()
+
     if input_func == 'update':
         function.update(conf_dict)
     elif input_func == 'setup':
@@ -84,7 +89,4 @@ if __name__ == "__main__":
     else:
         print('usage') 
 
-with open(os.path.join(conf_path, "conf.json"), 'w') as f_conf:
-    f_conf.write(json.dumps(conf_dict))
-f_conf.close()
 # lastly save the configuration to the json file
