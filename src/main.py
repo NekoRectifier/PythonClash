@@ -3,6 +3,7 @@ import argparse
 from loguru import logger
 import json
 import os
+import utils
 
 parser = argparse.ArgumentParser(usage="\n\tpython3 main.py {setup, update, start, stop}\n")
 
@@ -26,10 +27,9 @@ parser.add_argument(
 args = parser.parse_args()
 
 # rewrite
-_marker = False
+_marker = False # indeicating for using def conf dir
 def_conf_path: str =  os.path.join(os.path.expandvars('$HOME'), '.config', 'PythonClash')
 conf_path = ""
-conf_dict: dict[str, str] = {}
 
 if args.dir is not None:
     logger.info("Using custom config dir, writing now...")
@@ -51,12 +51,13 @@ elif args.dir is None and not os.path.exists(def_conf_path):
     
 if _marker:
     os.makedirs(def_conf_path, exist_ok=True)
-    # with open(def_conf_path, ) as f_conf:
-    #     f_conf.write("{}")
-    # f_conf.close()
     conf_path = def_conf_path
 
-conf_dict['config_dir'] = conf_path
+utils.init_perf(conf_path)
+logger.debug("current config dir: " + conf_path)
+
+if utils.perf.get('config_dir') != conf_path:
+    utils.perf['config_dir'] = conf_path
 
 if __name__ == "__main__":
 
@@ -72,19 +73,14 @@ if __name__ == "__main__":
 
     if args.url is not None:
         logger.info("new subscribe url has been wrote to file")
-        conf_dict['sub_url'] = args.url
-
-    with open(os.path.join(conf_path, "conf.json"), 'w') as f_conf:
-        logger.debug("current config idr: " + conf_path)
-        f_conf.write(json.dumps(conf_dict))
-    f_conf.close()
+        utils.perf['sub_url'] = args.url
 
     if input_func == 'update':
-        function.update(conf_dict)
+        function.update()
     elif input_func == 'setup':
-        function.setup(conf_dict)
+        function.setup()
     elif input_func == 'start':
-        function.start(conf_dict)
+        function.start()
     else:
         print('usage') 
 

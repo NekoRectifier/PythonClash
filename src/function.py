@@ -7,18 +7,25 @@ import yaml
 import subprocess
 
 
-def setup(conf_dict: dict):
+def setup():
     # TODO: check if there's a sudo permission
-    _mmdb_path: str = str(conf_dict["config_dir"] + "/conf/Country.mmdb")
-    _script_path: str = conf_dict["config_dir"] + "/scripts"
+    _mmdb_path: str = str(utils.perf["config_dir"] + "/conf/Country.mmdb")
+    _script_path: str = utils.perf["config_dir"] + "/scripts"
     shell_type: str = utils.get_shell_type()
 
-    if not os.path.exists(conf_dict["config_dir"] + "/scripts/PythonClash.fish"):
-        # Release Script Files
-        logger.info("Creating shell script...")
-        os.makedirs(_script_path, exist_ok=True)
-        utils.release_script(_script_path)
+    _mihomo_path = subprocess.getoutput("which mihomo")
 
+    ## detect mihomo binary path
+    #TODO: multiple binary mihomo detected
+    if _mihomo_path.startswith("which:"):
+        logger.error("No usable mihomo binary found!\nTry to download one and put it in the system path.")
+        exit(1)
+    else:
+        logger.info("Mihomo binary detected")
+        utils.perf["mihomo_path"] = _mihomo_path
+        #utils.save_config(utils.perf["config_dir"], utils.perf)
+
+    # Release Script Files
     if shell_type == "Fish":
         _path: str = os.path.expandvars('$HOME') + "/.config/fish/config.fish"
         _config_valid: bool = os.path.exists(_path)
@@ -27,7 +34,7 @@ def setup(conf_dict: dict):
             utils.append_file("source " + os.path.join(_script_path, "/PythonClash.fish"), _path)
             logger.info("Finished adding function to shell config file...")
         elif _config_valid and utils.check_string_in_file(_path, "PythonClash.fish"):
-            logger.info("Functions had been added to the shell config")
+            logger.info("Functions had been added to the shell config, skipping...")
         else:
             logger.error("Fish config file is not as intended, script in fish shell will not be usable!")
     else:
@@ -49,25 +56,26 @@ def setup(conf_dict: dict):
             logger.warning(
                 "'wget' is not usable, try to download with builit in urllib..."
             )
+            # TODO replace with something else
             urllib.request.urlretrieve(
                 "https://mirror.ghproxy.com/https://github.com/Dreamacro/maxmind-geoip/releases/latest/download/Country.mmdb",
                 _mmdb_path,
             )
         logger.info("Finished database downloading")
     else:
-        logger.info("GeoIP Database exists")
+        logger.info("GeoIP Database exists, skipping...")
     logger.info("PythonClash Setup finished")
-    # TODO, download clash core 
+    utils.save_perf()
 
 
-def update(conf_dict: dict):
+def update():
     _yml_content = {}
-    _config_path: str = conf_dict['config_dir'] + "/conf/config.yaml"
+    _config_path: str = utils.perf['config_dir'] + "/conf/config.yaml"
 
     try:
-        if conf_dict.get("sub_url") is not None:
+        if utils.perf.get("sub_url") is not None:
             logger.info("updating config now...")
-            urllib.request.urlretrieve(str(conf_dict.get("sub_url")), _config_path)
+            urllib.request.urlretrieve(str(utils.perf.get("sub_url")), _config_path)
         else:
             logger.error("Subscription URL haven't been set. Exiting...")
             exit(1)
@@ -86,11 +94,11 @@ def update(conf_dict: dict):
     if utils.is_yml_valid(_yml_content):
         logger.debug("downloaded config seems valid")
 
-        if conf_dict.get("secret") is None:
+        if utils.perf.get("secret") is None:
             # defult secret is 'admin'
             _secret = "admin"
         else:
-            _secret: str = str(conf_dict.get("secret"))
+            _secret: str = str(utils.perf.get("secret"))
 
         # custom settings
         options: dict[str, str] = {
@@ -113,25 +121,31 @@ def update(conf_dict: dict):
         # TODO: base64 config file support
         logger.critical("downloaded config is corrupted!")
         exit(1)
+    utils.save_perf()
 
 
-def start(conf_dict):
-    _dir:str = str(conf_dict['config_dir'])
-    clash_bin_path: str = "/usr/local/bin/mihomo"
+def start():
+    _dir:str = str(utils.perf['config_dir'])
+    _mihomo_path = str(utils.perf.get("mihomo_path"))
+    print(utils.perf)
 
-    if not utils.is_yml_valid(os.path.join(_dir, "config.yaml")):
+    if _mihomo_path == "":
+        logger.error("No mihomo binary path set, please run setup first")
+        exit(1)
+
+    if not utils.is_yml_valid(os.path.join(_dir, "conf","config.yaml")):
         logger.warning("No proper configuration in the config.yaml, probable no proxy functionality")
 
-    if not os.path.exists(str(conf_dict["config_dir"] + "/conf/Country.mmdb")):
+    if not os.path.exists(str(utils.perf["config_dir"] + "/conf/Country.mmdb")):
         logger.warning("No mmdb file, probable no proxy functionality")
 
-    if os.path.exists(clash_bin_path):
-        ins_indks: list[int] = utils.detect_instance(clash_bin_path.rpartition("/")[2])
+    if os.path.exists(_mihomo_path):
+        ins_indks: list[int] = utils.detect_instance(_mihomo_path.rpartition("/")[2])
         if len(ins_indks) == 0:
             logger.info("Starting clash core...")
             subprocess.run(
                 "nohup "
-                + clash_bin_path
+                + _mihomo_path
                 + " -d "
                 + _dir
                 + "/conf > "
@@ -143,8 +157,9 @@ def start(conf_dict):
             logger.warning("Other clash instance is already running, killing...")
             stop()
     else:
-        logger.critical("Clash binary at " + clash_bin_path + " is not exist, exiting!")
+        logger.critical("Clash binary at " + _mihomo_path + " is not exist, exiting!")
         exit(1)
+    utils.save_perf()
 
 
 def stop(_target='mihomo'):
@@ -156,3 +171,5 @@ def stop(_target='mihomo'):
         for pid in ins_indks:
             subprocess.run("kill -9 " + str(pid), shell=True, check=True)
         logger.info("All running clash instance has been closed")
+    utils.save_perf()
+

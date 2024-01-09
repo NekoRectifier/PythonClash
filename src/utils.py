@@ -4,6 +4,10 @@ from loguru import logger
 import platform
 import psutil
 import yaml
+import pygeoip
+import json
+
+perf: dict[str, str] = {}
 
 def get_shell_type() -> str:
     shell = os.environ.get('SHELL')
@@ -39,11 +43,12 @@ def check_string_in_file(file_path, target_string) -> bool:
 
 def is_yml_valid(yml_obj) -> bool:
     _obj: dict[str, str] = {}
-    if yml_obj is str:
+    # logger.debug(yml_obj)
+    if type(yml_obj) is str:
         with open(yml_obj, 'r') as f_yml:
             _obj = yaml.load(f_yml.read(), yaml.FullLoader)
         f_yml.close()
-    elif yml_obj is dict:
+    elif type(yml_obj) is dict:
         _obj = yml_obj
     else:
         logger.error("no valid input to 'is_yml_valid', exiting...")
@@ -126,3 +131,35 @@ function proxy_off(){
                 """
             )
         f_bashscript.close()
+
+def check_mmdb_file(path):
+    if not os.path.isfile(path):
+        print("文件路径无效")
+        return False
+    
+    try:
+        gi = pygeoip.GeoIP(path)
+        return True
+    except pygeoip.GeoIPError:
+        print("无效的.mmdb文件")
+        return False
+    
+def save_perf():
+    _conf_path = str(perf.get('config_dir'))
+    with open(os.path.join(_conf_path, "conf.json"), 'w') as f_conf:
+        logger.debug("saving config to " + _conf_path)
+        f_conf.write(json.dumps(perf))
+    f_conf.close()
+
+def init_perf(_conf_path):
+    # save_perf()
+    global perf
+    with open(os.path.join(_conf_path, "conf.json"), 'r') as f_conf:
+        con = f_conf.read()
+        if con == "":
+            logger.debug("conf.json is empty")
+        else:
+            logger.debug("reading perf, applying to perf...")
+            perf = json.loads(con)
+    f_conf.close()
+
