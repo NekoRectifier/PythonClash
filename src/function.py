@@ -127,7 +127,6 @@ def update():
 def start():
     _dir:str = str(utils.perf['config_dir'])
     _mihomo_path = str(utils.perf.get("mihomo_path"))
-    print(utils.perf)
 
     if _mihomo_path == "":
         logger.error("No mihomo binary path set, please run setup first")

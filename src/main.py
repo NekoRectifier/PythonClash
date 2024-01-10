@@ -1,11 +1,12 @@
+import utils
 import function
+
 import argparse
 from loguru import logger
-import json
 import os
-import utils
 
-parser = argparse.ArgumentParser(usage="\n\tpython3 main.py {setup, update, start, stop}\n")
+
+parser = argparse.ArgumentParser()
 
 parser.add_argument(
     'function',
