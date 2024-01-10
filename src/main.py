@@ -4,7 +4,18 @@ import function
 import argparse
 from loguru import logger
 import os
+import sys
 
+## loguru configuration
+logger.remove(handler_id=None)
+
+logger.add(
+    sink=sys.stderr,
+    format="<green>{time:HH:mm:ss}</> | <blue>{level}</> | {message}",
+    colorize=True,
+    level='INFO',
+)
+# TODO: using starting time as log file name 
 
 parser = argparse.ArgumentParser()
 
@@ -61,15 +72,6 @@ if utils.perf.get('config_dir') != conf_path:
     utils.perf['config_dir'] = conf_path
 
 if __name__ == "__main__":
-
-    # only valid with true log files
-    logger.add(
-        format="{time}|{level}|{message}",
-        level='INFO',
-        sink=conf_path + "/log/service.log"
-    )
-    # TODO: using starting time as log file name 
-
     input_func = args.function
 
     if args.url is not None:
