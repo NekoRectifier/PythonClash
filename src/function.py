@@ -43,7 +43,7 @@ def setup():
         _config_valid: bool = os.path.exists(_path)
 
         if _config_valid and not utils.check_string_in_file(_path, "PythonClash.fish"):
-            utils.append_file("source " + os.path.join(_script_path, "/PythonClash.fish"), _path)
+            utils.append_file("source " + os.path.join(_script_path, "PythonClash.fish"), _path)
             logger.info("Finished adding function to shell config file...")
         elif _config_valid and utils.check_string_in_file(_path, "PythonClash.fish"):
             logger.info("Functions had been added to the shell config, skipping...")
