@@ -8,12 +8,24 @@ import subprocess
 
 
 def setup():
-    # TODO: check if there's a sudo permission
     _mmdb_path: str = str(utils.perf["config_dir"] + "/conf/Country.mmdb")
     _script_path: str = utils.perf["config_dir"] + "/scripts"
-    shell_type: str = utils.get_shell_type()
-
+    _log_path = os.path.join(utils.perf["config_dir"], "logs")
+    
+    # TODO: make sure that 'which' exists
     _mihomo_path = subprocess.getoutput("which mihomo")
+    shell_type: str = utils.get_shell_type()
+    # TODO: check if there's a sudo permission
+
+    # check conf folders integrity
+    if not os.path.exists(_script_path):
+        os.makedirs(_script_path, exist_ok=True)
+    if not os.path.exists(_log_path):
+        os.makedirs(_log_path)
+
+    # saving to perf file
+    utils.perf["script_path"] = _script_path
+    utils.perf["log_path"] = _log_path
 
     ## detect mihomo binary path
     #TODO: multiple binary mihomo detected
@@ -148,8 +160,8 @@ def start():
                 + " -d "
                 + _dir
                 + "/conf > "
-                + _dir
-                + "/log/clash.log 2>&1 &",
+                + str(utils.perf["log_path"])
+                + "/clash.log 2>&1 &",
                 shell=True,
             )
         else:
