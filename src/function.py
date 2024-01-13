@@ -38,6 +38,10 @@ def setup():
         #utils.save_config(utils.perf["config_dir"], utils.perf)
 
     # Release Script Files
+    # TODO: check if its already there
+    utils.release_script(_script_path)
+
+    # Modify User Shell Script
     if shell_type == "Fish":
         _path: str = os.path.expandvars('$HOME') + "/.config/fish/config.fish"
         _config_valid: bool = os.path.exists(_path)
