@@ -12,7 +12,7 @@ logger.add(
     sink=sys.stderr,
     format="<green>{time:HH:mm:ss}</> | <blue>{level}</> | {message}",
     colorize=True,
-    level='INFO',
+    level='DEBUG',
 )
 # TODO: using starting time as log file name 
 
@@ -50,11 +50,11 @@ if args.dir is not None:
         exit(1)
 
 elif args.dir is None:
+    conf_dir = def_conf_dir
     if os.path.exists(def_conf_dir):
         # using default conf.json directory: ~/.config/PythonClash/conf.json
         logger.info("Using default config dir...")
     else:
-        conf_dir = def_conf_dir
         # recursively creating new folders until reach "PythonClash"
         logger.warning("Default user home dir not exist, creating...")
         os.makedirs(def_conf_dir, exist_ok=True)
@@ -64,17 +64,15 @@ logger.debug("current config dir: " + conf_dir)
 _conf_path = os.path.join(conf_dir, "conf.json")
 
 if not os.path.exists(_conf_path):
-    logger.debug("initiating conf.json...")
+    logger.debug("creating & initializing conf.json...")
     with open(_conf_path, 'w') as f:
         # init conf.json
         f.write("{}")
     f.close()
-else:
-    # at now conf.json should be always accessible
-    utils.init_perf(conf_dir)
 
-if utils.perf.get('config_dir') != conf_dir:
-    utils.perf['config_dir'] = conf_dir
+# at now conf.json should be always accessible
+utils.init_perf(_conf_path)
+utils.perf['config_dir'] = conf_dir
 
 if __name__ == "__main__":
     input_func = args.function

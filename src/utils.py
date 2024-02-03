@@ -1,3 +1,4 @@
+import io
 import os
 import getpass
 from loguru import logger
@@ -160,18 +161,25 @@ def save_perf():
     f_conf.close()
 
 
-def init_perf(_conf_dir):
+def init_perf(conf):
+    # used when conf.json is already exist
     global perf
-    conf = os.path.join(_conf_dir, "conf.json")
+    logger.debug("initiating " + conf + "...")
 
-    if os.path.exists(conf):
-        logger.debug("conf.json exists")
-        with open(conf, 'r') as f_conf:
+    # using r+ to read & write while pointer is at head
+    with open(conf, 'r+') as f_conf:
+        try:
             con = f_conf.read()
+        except io.UnsupportedOperation as e:
+            logger.error(e.args)
+            exit(1)
+        try:
             logger.debug("applying previous settings...")
             perf = json.loads(con)
-        f_conf.close()
-    else:
-        with open(conf, 'w') as f_conf:
-            f_conf.close()
+            logger.info("Perf loaded")
+        except json.decoder.JSONDecodeError:
+            logger.warning("json config parse failed, erasing...")
+            # TODO: may have a problem here
+            f_conf.write("{}")
+    f_conf.close()
 
