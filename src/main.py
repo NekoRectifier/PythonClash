@@ -1,12 +1,11 @@
 import utils
 import function
-
 import argparse
 from loguru import logger
 import os
 import sys
 
-## loguru configuration
+# loguru configuration
 logger.remove(handler_id=None)
 
 logger.add(
@@ -38,38 +37,44 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-# rewrite
-_marker = False # indeicating for using def conf dir
-def_conf_path: str =  os.path.join(os.path.expandvars('$HOME'), '.config', 'PythonClash')
-conf_path = ""
+def_conf_dir: str = os.path.join(os.path.expandvars('$HOME'), '.config', 'PythonClash')
+conf_dir = ""
 
 if args.dir is not None:
     logger.info("Using custom config dir, writing now...")
     _abs_custom_dir = str(os.path.abspath(args.dir))
     if os.path.exists(_abs_custom_dir):
-        conf_path: str = _abs_custom_dir
+        conf_dir: str = _abs_custom_dir
     else:
         logger.critical("Designated dir is not reachable, do not use any short like '~' ")
         exit(1)
 
-elif args.dir is None and os.path.exists(def_conf_path):
-    # using default conf.json directory: ~/.config/PythonClash/conf.json
-    logger.info("Using default config dir...")
-    _marker = True
-elif args.dir is None and not os.path.exists(def_conf_path):
-    # recursively creating new folders until reach "PythonClash"
-    logger.warning("Default user home dir not exist, creating...")
-    _marker = True
-    
-if _marker:
-    os.makedirs(def_conf_path, exist_ok=True)
-    conf_path = def_conf_path
+elif args.dir is None:
+    if os.path.exists(def_conf_dir):
+        # using default conf.json directory: ~/.config/PythonClash/conf.json
+        logger.info("Using default config dir...")
+    else:
+        conf_dir = def_conf_dir
+        # recursively creating new folders until reach "PythonClash"
+        logger.warning("Default user home dir not exist, creating...")
+        os.makedirs(def_conf_dir, exist_ok=True)
 
-utils.init_perf(conf_path)
-logger.debug("current config dir: " + conf_path)
+logger.debug("current config dir: " + conf_dir)
+# confirming conf_path after conf_dir is confirmed
+_conf_path = os.path.join(conf_dir, "conf.json")
 
-if utils.perf.get('config_dir') != conf_path:
-    utils.perf['config_dir'] = conf_path
+if not os.path.exists(_conf_path):
+    logger.debug("initiating conf.json...")
+    with open(_conf_path, 'w') as f:
+        # init conf.json
+        f.write("{}")
+    f.close()
+else:
+    # at now conf.json should be always accessible
+    utils.init_perf(conf_dir)
+
+if utils.perf.get('config_dir') != conf_dir:
+    utils.perf['config_dir'] = conf_dir
 
 if __name__ == "__main__":
     input_func = args.function
@@ -85,6 +90,6 @@ if __name__ == "__main__":
     elif input_func == 'start':
         function.start()
     else:
-        print('usage') 
+        print('usage')
 
-# lastly save the configuration to the json file
+        # lastly save the configuration to the json file
