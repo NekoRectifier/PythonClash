@@ -5,19 +5,30 @@ import urllib.request
 import urllib.error
 import yaml
 import subprocess
+import urllib3
+from tqdm import tqdm
 
 
 def setup():
-    _mmdb_path: str = str(utils.perf["config_dir"] + "/conf/Country.mmdb")
-    _script_path: str = utils.perf["config_dir"] + "/scripts"
-    _log_path = os.path.join(utils.perf["config_dir"], "logs")
-    
-    # TODO: make sure that 'which' exists
-    _mihomo_path = subprocess.getoutput("which mihomo")
-    shell_type: str = utils.get_shell_type()
-    # TODO: check if there's a sudo permission
+    # path constants
+    conf_dir = utils.perf["config_dir"]
 
-    # check conf folders integrity
+    if conf_dir is None or conf_dir == '':
+        logger.debug(conf_dir)
+        logger.error("perf: conf_dir is not initiated")
+        exit(1)
+
+    if not os.path.exists(os.path.join(conf_dir, "conf")):
+        logger.debug("making conf dir in root conf...")
+        os.mkdir(os.path.join(conf_dir, "conf"))
+
+    _mmdb_path: str = str(conf_dir + "/conf/Country.mmdb")
+    _script_path: str = conf_dir + "/scripts"
+    _log_path = os.path.join(conf_dir, "logs")
+    # objs
+    http = urllib3.PoolManager(cert_reqs='CERT_NONE', assert_hostname=False)
+
+    # 1. check conf folders integrity
     if not os.path.exists(_script_path):
         os.makedirs(_script_path, exist_ok=True)
     if not os.path.exists(_log_path):
@@ -27,15 +38,38 @@ def setup():
     utils.perf["script_path"] = _script_path
     utils.perf["log_path"] = _log_path
 
-    ## detect mihomo binary path
-    #TODO: multiple binary mihomo detected
-    if _mihomo_path.startswith("which:"):
-        logger.error("No usable mihomo binary found!\nTry to download one and put it in the system path.")
-        exit(1)
-    else:
-        logger.info("Mihomo binary detected")
+    # 2. check exec bin
+    env_paths = os.environ.get("PATH").replace(":", " ")
+    try:
+        res = subprocess.run("find " + env_paths + " -name mihomo", shell=True, stdout=subprocess.PIPE, text=True)
+        # saving mihomo bin path
+        _mihomo_path: str = res.stdout.strip()
+        logger.info("Mihomo binary detected at " + _mihomo_path)
         utils.perf["mihomo_path"] = _mihomo_path
-        #utils.save_config(utils.perf["config_dir"], utils.perf)
+    except subprocess.CalledProcessError as e:
+        if e.returncode != 0:
+            logger.warning("mihomo binary does not exist")
+            # starting mihomo binary download now
+            _arch = utils.get_cpu_arch()
+            bin_url = "https://github.com/MetaCubeX/mihomo/releases/download/v1.18.0/mihomo-linux-" + _arch + "-v1.18.0.gz"
+            response = http.request('GET', bin_url, preload_content=False)
+            total_size = int(response.headers.get('content-length', 0))
+
+            with open(os.path.join(conf_dir, "mihomo.gz"), 'wb') as file, tqdm(
+                    desc=os.path.join(conf_dir, "mihomo.gz"),
+                    total=total_size,
+                    unit='iB',
+                    unit_scale=True,
+                    unit_divisor=1024,
+            ) as progress_bar:
+                # 逐块写入文件并更新进度条
+                for data in response.stream(1024):
+                    size = file.write(data)
+                    progress_bar.update(size)
+    # TODO: unzip the compress
+
+    shell_type: str = utils.get_shell_type()
+    # TODO: check if there's a sudo permission
 
     # Release Script Files
     # TODO: check if its already there
@@ -59,24 +93,22 @@ def setup():
     if not os.path.exists(_mmdb_path):
         # TODO mmdb validity check
         logger.warning("No GeoIP Database detected in conf folder")
-        try:
-            logger.info("Downloading database now, please wait...")
-            subprocess.run(
-                "wget https://mirror.ghproxy.com/https://github.com/Dreamacro/maxmind-geoip/releases/latest/download/Country.mmdb -O "
-                + _mmdb_path,
-                shell=True,
-                check=True,
-                stderr=subprocess.DEVNULL,
-            )
-        except subprocess.CalledProcessError:
-            logger.warning(
-                "'wget' is not usable, try to download with builit in urllib..."
-            )
-            # TODO replace with something else
-            urllib.request.urlretrieve(
-                "https://mirror.ghproxy.com/https://github.com/Dreamacro/maxmind-geoip/releases/latest/download/Country.mmdb",
-                _mmdb_path,
-            )
+        mmdb_url = "https://cdn.jsdelivr.net/gh/Hackl0us/GeoIP2-CN@release/Country.mmdb"
+        response = http.request('GET', mmdb_url, preload_content=False)
+        total_size = int(response.headers.get('content-length', 0))
+
+        with open(_mmdb_path, 'wb') as file, tqdm(
+                desc=_mmdb_path,
+                total=total_size,
+                unit='iB',
+                unit_scale=True,
+                unit_divisor=1024,
+        ) as progress_bar:
+            # 逐块写入文件并更新进度条
+            for data in response.stream(1024):
+                size = file.write(data)
+                progress_bar.update(size)
+
         logger.info("Finished database downloading")
     else:
         logger.info("GeoIP Database exists, skipping...")
@@ -141,14 +173,14 @@ def update():
 
 
 def start():
-    _dir:str = str(utils.perf['config_dir'])
+    _dir: str = str(utils.perf['config_dir'])
     _mihomo_path = str(utils.perf.get("mihomo_path"))
 
     if _mihomo_path == "":
         logger.error("No mihomo binary path set, please run setup first")
         exit(1)
 
-    if not utils.is_yml_valid(os.path.join(_dir, "conf","config.yaml")):
+    if not utils.is_yml_valid(os.path.join(_dir, "conf", "config.yaml")):
         logger.warning("No proper configuration in the config.yaml, probable no proxy functionality")
 
     if not os.path.exists(str(utils.perf["config_dir"] + "/conf/Country.mmdb")):
@@ -187,4 +219,3 @@ def stop(_target='mihomo'):
             subprocess.run("kill -9 " + str(pid), shell=True, check=True)
         logger.info("All running clash instance has been closed")
     utils.save_perf()
-
