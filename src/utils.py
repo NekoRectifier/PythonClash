@@ -7,8 +7,11 @@ import psutil
 import yaml
 import pygeoip
 import json
+import urllib3
+from tqdm import tqdm
 
 perf: dict[str, str] = {}
+
 
 def get_shell_type() -> str:
     shell = os.environ.get('SHELL')
@@ -183,3 +186,39 @@ def init_perf(conf):
             f_conf.write("{}")
     f_conf.close()
 
+
+urllib3.disable_warnings()
+http = urllib3.PoolManager(cert_reqs='CERT_NONE', assert_hostname=False)
+
+
+def vis_download(_url, _save_path):
+    response = http.request('GET', _url, preload_content=False)
+    total_size = int(response.headers.get('content-length', 0))
+    try:
+        with open(_save_path, 'wb') as file, tqdm(
+                desc=_save_path,
+                total=total_size,
+                unit='iB',
+                unit_scale=True,
+                unit_divisor=1024,
+        ) as progress_bar:
+            # 逐块写入文件并更新进度条
+            for data in response.stream(1024):
+                size = file.write(data)
+                progress_bar.update(size)
+    except OSError as e:
+        logger.error(e)
+        exit(1)
+
+
+def extract_tar_gz(tar_gz_file, output_path):
+    import tarfile
+    with tarfile.open(tar_gz_file, 'r:gz') as tar:
+        tar.extractall(output_path)
+
+
+def decompress_gzip_file(gzip_file, output_file):
+    import gzip
+    with gzip.open(gzip_file, 'rb') as f_in:
+        with open(output_file, 'wb') as f_out:
+            f_out.write(f_in.read())

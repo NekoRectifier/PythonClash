@@ -10,8 +10,8 @@ logger.remove(handler_id=None)
 
 logger.add(
     sink=sys.stderr,
-    format="<green>{time:HH:mm:ss}</> | <blue>{level}</> | {message}",
-    colorize=True,
+    # format="<green>{time:HH:mm:ss}</> | <blue>{level}</> | {message}",
+    # colorize=True,
     level='DEBUG',
 )
 # TODO: using starting time as log file name 
@@ -89,5 +89,3 @@ if __name__ == "__main__":
         function.start()
     else:
         print('usage')
-
-        # lastly save the configuration to the json file

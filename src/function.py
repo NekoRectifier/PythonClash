@@ -1,3 +1,4 @@
+import pygeoip
 import utils
 from loguru import logger
 import os
@@ -5,8 +6,6 @@ import urllib.request
 import urllib.error
 import yaml
 import subprocess
-import urllib3
-from tqdm import tqdm
 
 
 def setup():
@@ -25,8 +24,6 @@ def setup():
     _mmdb_path: str = str(conf_dir + "/conf/Country.mmdb")
     _script_path: str = conf_dir + "/scripts"
     _log_path = os.path.join(conf_dir, "logs")
-    # objs
-    http = urllib3.PoolManager(cert_reqs='CERT_NONE', assert_hostname=False)
 
     # 1. check conf folders integrity
     if not os.path.exists(_script_path):
@@ -41,37 +38,34 @@ def setup():
     # 2. check exec bin
     env_paths = os.environ.get("PATH").replace(":", " ")
     try:
-        res = subprocess.run("find " + env_paths + " -name mihomo", shell=True, stdout=subprocess.PIPE, text=True)
+        res = subprocess.run("find " + env_paths + " -name mihomo", shell=True,
+                             stdout=subprocess.PIPE,
+                             text=True,
+                             stderr=subprocess.DEVNULL)
         # saving mihomo bin path
+        if res.stdout.strip() == "":
+            raise subprocess.CalledProcessError(1, "")
         _mihomo_path: str = res.stdout.strip()
         logger.info("Mihomo binary detected at " + _mihomo_path)
         utils.perf["mihomo_path"] = _mihomo_path
     except subprocess.CalledProcessError as e:
-        if e.returncode != 0:
-            logger.warning("mihomo binary does not exist")
-            # starting mihomo binary download now
-            _arch = utils.get_cpu_arch()
-            bin_url = "https://github.com/MetaCubeX/mihomo/releases/download/v1.18.0/mihomo-linux-" + _arch + "-v1.18.0.gz"
-            response = http.request('GET', bin_url, preload_content=False)
-            total_size = int(response.headers.get('content-length', 0))
-
-            with open(os.path.join(conf_dir, "mihomo.gz"), 'wb') as file, tqdm(
-                    desc=os.path.join(conf_dir, "mihomo.gz"),
-                    total=total_size,
-                    unit='iB',
-                    unit_scale=True,
-                    unit_divisor=1024,
-            ) as progress_bar:
-                # 逐块写入文件并更新进度条
-                for data in response.stream(1024):
-                    size = file.write(data)
-                    progress_bar.update(size)
+        logger.warning("mihomo binary does not exist")
+        # starting mihomo binary download now
+        _arch = utils.get_cpu_arch()
+        bin_url = "https://github.ink/MetaCubeX/mihomo/releases/download/v1.18.0/mihomo-" + _arch + "-v1.18.0.gz"
+        utils.vis_download(bin_url, os.path.join(conf_dir, "mihomo.gz"))
     # TODO: unzip the compress
 
     shell_type: str = utils.get_shell_type()
     # TODO: check if there's a sudo permission
+    if os.getuid() == 0:
+        logger.info("root permission acquired, mihomo binary will be installed in /usr/bin/")
+    else:
+        logger.info("mihomo will be installed in ~/.local/share/bin")
+        logger.info(os.path.join(conf_dir, "mihomo.gz"))
+        utils.decompress_gzip_file(os.path.join(conf_dir, "mihomo.gz"), "a.j")
 
-    # Release Script Files
+    # 3. Release Script Files
     # TODO: check if its already there
     utils.release_script(_script_path)
 
@@ -90,26 +84,19 @@ def setup():
     else:
         logger.error("Not supported to set shell functions.")
 
+    # MMDB download
     if not os.path.exists(_mmdb_path):
-        # TODO mmdb validity check
-        logger.warning("No GeoIP Database detected in conf folder")
+        logger.warning("No GeoIP Database detected in conf folder, downloading now...")
         mmdb_url = "https://cdn.jsdelivr.net/gh/Hackl0us/GeoIP2-CN@release/Country.mmdb"
-        response = http.request('GET', mmdb_url, preload_content=False)
-        total_size = int(response.headers.get('content-length', 0))
-
-        with open(_mmdb_path, 'wb') as file, tqdm(
-                desc=_mmdb_path,
-                total=total_size,
-                unit='iB',
-                unit_scale=True,
-                unit_divisor=1024,
-        ) as progress_bar:
-            # 逐块写入文件并更新进度条
-            for data in response.stream(1024):
-                size = file.write(data)
-                progress_bar.update(size)
-
+        utils.vis_download(mmdb_url, _mmdb_path)
+        try:
+            pygeoip.GeoIP(_mmdb_path)
+        except pygeoip.GeoIPError as e:
+            logger.error(str(e.args) + "\nmmdb file is broken, please retry download")
+            exit(1)
+            # may improve here
         logger.info("Finished database downloading")
+
     else:
         logger.info("GeoIP Database exists, skipping...")
     logger.info("PythonClash Setup finished")
@@ -143,7 +130,7 @@ def update():
         logger.debug("downloaded config seems valid")
 
         if utils.perf.get("secret") is None:
-            # defult secret is 'admin'
+            # default secret is 'admin'
             _secret = "admin"
         else:
             _secret: str = str(utils.perf.get("secret"))

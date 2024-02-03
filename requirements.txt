@@ -1,2 +1,4 @@
 loguru
 psutil
+pyyaml
+pygeoip
