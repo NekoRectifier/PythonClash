@@ -52,23 +52,24 @@ def setup():
         logger.warning("mihomo binary does not exist")
         # starting mihomo binary download now
         _arch = utils.get_cpu_arch()
-        bin_url = "https://github.ink/MetaCubeX/mihomo/releases/download/v1.18.0/mihomo-" + _arch + "-v1.18.0.gz"
-        utils.vis_download(bin_url, os.path.join(conf_dir, "mihomo.gz"))
-    # TODO: unzip the compress
+        bin_url = ("https://mirror.ghproxy.com/https://github.com/MetaCubeX/mihomo/releases/download/v1.18.0/mihomo-" +
+                   _arch + "-v1.18.0.gz")
+        compress_path = os.path.join(conf_dir, "mihomo.gz")
+        utils.vis_download(bin_url, compress_path)
 
-    shell_type: str = utils.get_shell_type()
-    # TODO: check if there's a sudo permission
-    if os.getuid() == 0:
-        logger.info("root permission acquired, mihomo binary will be installed in /usr/bin/")
-    else:
-        logger.info("mihomo will be installed in ~/.local/share/bin")
-        logger.info(os.path.join(conf_dir, "mihomo.gz"))
-        utils.decompress_gzip_file(os.path.join(conf_dir, "mihomo.gz"), "a.j")
+        if os.getuid() == 0:
+            logger.info("root permission acquired, mihomo binary will be installed in /usr/bin/mihomo")
+            utils.decompress_gzip_file(compress_path, "/usr/bin/mihomo")
+
+        else:
+            logger.info("mihomo will be installed in ~/.local/share/bin/mihomo")
+            utils.decompress_gzip_file(compress_path,
+                                       os.path.join(os.path.expandvars('$HOME'), ".local/share/bin/mihomo"))
 
     # 3. Release Script Files
     # TODO: check if its already there
     utils.release_script(_script_path)
-
+    shell_type: str = utils.get_shell_type()
     # Modify User Shell Script
     if shell_type == "Fish":
         _path: str = os.path.expandvars('$HOME') + "/.config/fish/config.fish"
@@ -82,7 +83,7 @@ def setup():
         else:
             logger.error("Fish config file is not as intended, script in fish shell will not be usable!")
     else:
-        logger.error("Not supported to set shell functions.")
+        logger.error("Using " + shell_type + "Not supported to set shell functions.")
 
     # MMDB download
     if not os.path.exists(_mmdb_path):
