@@ -30,9 +30,9 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    '-d', '--dir',
+    '--config_dir',
     type=str,
-    help="input a path where you want to place the conf.json"
+    help="path of configuration files like conf.json"
 )
 
 args = parser.parse_args()
@@ -87,5 +87,3 @@ if __name__ == "__main__":
         function.setup()
     elif input_func == 'start':
         function.start()
-    else:
-        print('usage')

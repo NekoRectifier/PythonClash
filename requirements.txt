@@ -2,3 +2,5 @@ loguru
 psutil
 pyyaml
 pygeoip
+urllib3
+tqdm

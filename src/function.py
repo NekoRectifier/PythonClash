@@ -1,19 +1,15 @@
-import pygeoip
 import utils
 from loguru import logger
 import os
-import urllib.request
-import urllib.error
 import yaml
 import subprocess
 
 
 def setup():
     # path constants
-    conf_dir = utils.perf["config_dir"]
+    conf_dir = utils.perf.get("config_dir")
 
     if conf_dir is None or conf_dir == '':
-        logger.debug(conf_dir)
         logger.error("perf: conf_dir is not initiated")
         exit(1)
 
@@ -105,25 +101,20 @@ def update():
     _yml_content = {}
     _config_path: str = utils.perf['config_dir'] + "/conf/config.yaml"
 
-    try:
-        if utils.perf.get("sub_url") is not None:
-            logger.info("updating config now...")
-            urllib.request.urlretrieve(str(utils.perf.get("sub_url")), _config_path)
-        else:
-            logger.error("Subscription URL haven't been set. Exiting...")
-            exit(1)
-    except urllib.error.URLError:
-        logger.error("URL cannot be connected")
+    if utils.perf.get("sub_url") is not None:
+        logger.info("updating config now...")
+        # urllib.request.urlretrieve(str(utils.perf.get("sub_url")), _config_path)
+        utils.vis_download(str(utils.perf.get("sub_url")), _config_path)
+    else:
+        logger.error("Subscription URL haven't been set. Exiting...")
         exit(1)
 
     with open(_config_path) as f:
-        _secret = ""
         _content: str = f.read()  # may have a ram problem
         _yml_content: dict = yaml.load(_content, yaml.FullLoader)
     f.close()
 
     # config validity check
-    # slow...
     if utils.is_yml_valid(_yml_content):
         logger.debug("downloaded config seems valid")
 
@@ -166,9 +157,11 @@ def start():
         exit(1)
 
     if not utils.is_yml_valid(os.path.join(_dir, "conf", "config.yaml")):
-        logger.warning("No proper configuration in the config.yaml, probable no proxy functionality")
+        logger.error("Failed to parse config.yaml, try 'update' again")
+        os.remove(os.path.join(_dir, "conf", "config.yaml"))
+        exit(1)
 
-    if not os.path.exists(str(utils.perf["config_dir"] + "/conf/Country.mmdb")):
+    if not os.path.exists(_dir + "/conf/Country.mmdb"):
         logger.warning("No mmdb file, probable no proxy functionality")
 
     if os.path.exists(_mihomo_path):
@@ -191,7 +184,6 @@ def start():
     else:
         logger.critical("Clash binary at " + _mihomo_path + " is not exist, exiting!")
         exit(1)
-    utils.save_perf()
 
 
 def stop(_target='mihomo'):
@@ -200,7 +192,9 @@ def stop(_target='mihomo'):
     if len(ins_indks) == 0:
         logger.error("No Running clash instance, exiting...")
     else:
-        for pid in ins_indks:
-            subprocess.run("kill -9 " + str(pid), shell=True, check=True)
+        try:
+            for pid in ins_indks:
+                subprocess.run("kill -9 " + str(pid), shell=True, check=True)
+        except subprocess.CalledProcessError:
+            logger.error("Failed to end other " + _target + "thread(s)")
         logger.info("All running clash instance has been closed")
-    utils.save_perf()
