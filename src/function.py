@@ -90,16 +90,13 @@ def setup():
         logger.warning("No GeoIP Database detected in conf folder, downloading now...")
         mmdb_url = "https://cdn.jsdelivr.net/gh/Hackl0us/GeoIP2-CN@release/Country.mmdb"
         utils.vis_download(mmdb_url, _mmdb_path)
-        try:
-            pygeoip.GeoIP(_mmdb_path)
-        except pygeoip.GeoIPError as e:
-            logger.error(str(e.args) + "\nmmdb file is broken, please retry download")
-            exit(1)
-            # may improve here
-        logger.info("Finished database downloading")
 
+        utils.check_mmdb(_mmdb_path)
+        logger.info("Finished database downloading")
     else:
-        logger.info("GeoIP Database exists, skipping...")
+        logger.info("GeoIP Database exists already, checking its integrity...")
+        utils.check_mmdb(_mmdb_path)
+        logger.info("GeoIP DB  OK")
     logger.info("PythonClash Setup finished")
     utils.save_perf()
 

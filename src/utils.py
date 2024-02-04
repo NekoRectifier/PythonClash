@@ -143,19 +143,6 @@ function proxy_off(){
         f_bashscript.close()
 
 
-def check_mmdb_file(path):
-    if not os.path.isfile(path):
-        print("文件路径无效")
-        return False
-
-    try:
-        gi = pygeoip.GeoIP(path)
-        return True
-    except pygeoip.GeoIPError:
-        print("无效的.mmdb文件")
-        return False
-
-
 def save_perf():
     _conf_path = str(perf.get('config_dir'))
     with open(os.path.join(_conf_path, "conf.json"), 'w') as f_conf:
@@ -222,3 +209,13 @@ def decompress_gzip_file(gzip_file, output_file):
     with gzip.open(gzip_file, 'rb') as f_in:
         with open(output_file, 'wb') as f_out:
             f_out.write(f_in.read())
+
+
+def check_mmdb(_mmdb_path):
+    try:
+        pygeoip.GeoIP(_mmdb_path)
+    except pygeoip.GeoIPError as e:
+        logger.error(str(e.args) + "\nmmdb file is broken, please retry download")
+        os.remove(_mmdb_path)
+        logger.info("Broken mmdb has been removed")
+        exit(1)
