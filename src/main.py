@@ -12,7 +12,7 @@ logger.add(
     sink=sys.stderr,
     # format="<green>{time:HH:mm:ss}</> | <blue>{level}</> | {message}",
     # colorize=True,
-    level='DEBUG',
+    level='INFO',
 )
 # TODO: using starting time as log file name 
 
@@ -40,16 +40,16 @@ args = parser.parse_args()
 def_conf_dir: str = os.path.join(os.path.expandvars('$HOME'), '.config', 'PythonClash')
 conf_dir = ""
 
-if args.dir is not None:
+if args.config_dir is not None:
     logger.info("Using custom config dir, writing now...")
-    _abs_custom_dir = str(os.path.abspath(args.dir))
+    _abs_custom_dir = str(os.path.abspath(args.config_dir))
     if os.path.exists(_abs_custom_dir):
         conf_dir: str = _abs_custom_dir
     else:
         logger.critical("Designated dir is not reachable, do not use any short like '~' ")
         exit(1)
 
-elif args.dir is None:
+elif args.config_dir is None:
     conf_dir = def_conf_dir
     if os.path.exists(def_conf_dir):
         # using default conf.json directory: ~/.config/PythonClash/conf.json
@@ -87,3 +87,5 @@ if __name__ == "__main__":
         function.setup()
     elif input_func == 'start':
         function.start()
+    elif input_func == 'status':
+        function.status()
