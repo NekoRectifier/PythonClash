@@ -219,3 +219,16 @@ def check_mmdb(_mmdb_path):
         os.remove(_mmdb_path)
         logger.info("Broken mmdb has been removed")
         exit(1)
+
+
+def modify_shell_conf(_path: str, shell_name: str):
+    # currently supporting bash & fish
+    _config_valid: bool = os.path.exists(_path)
+
+    if _config_valid and not check_string_in_file(_path, "PythonClash." + shell_name):
+        append_file("source " + os.path.join(perf['script_path'], "PythonClash." + shell_name), _path)
+        logger.info("Finished adding function to shell config file...")
+    elif _config_valid and check_string_in_file(_path, "PythonClash." + shell_name):
+        logger.info("Functions had been added to the shell config, skipping...")
+    else:
+        logger.error("Shell " + shell_name + " has no available config file, skipping...")

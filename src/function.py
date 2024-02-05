@@ -63,21 +63,15 @@ def setup():
                                        os.path.join(os.path.expandvars('$HOME'), ".local/share/bin/mihomo"))
 
     # 3. Release Script Files
-    # TODO: check if its already there
     utils.release_script(_script_path)
     shell_type: str = utils.get_shell_type()
     # Modify User Shell Script
     if shell_type == "Fish":
         _path: str = os.path.expandvars('$HOME') + "/.config/fish/config.fish"
-        _config_valid: bool = os.path.exists(_path)
-
-        if _config_valid and not utils.check_string_in_file(_path, "PythonClash.fish"):
-            utils.append_file("source " + os.path.join(_script_path, "PythonClash.fish"), _path)
-            logger.info("Finished adding function to shell config file...")
-        elif _config_valid and utils.check_string_in_file(_path, "PythonClash.fish"):
-            logger.info("Functions had been added to the shell config, skipping...")
-        else:
-            logger.error("Fish config file is not as intended, script in fish shell will not be usable!")
+        utils.modify_shell_conf(_path, shell_type.lower())
+    elif shell_type == "Bash":
+        _path: str = os.path.expandvars('$HOME') + "/.bashrc"
+        utils.modify_shell_conf(_path, shell_type.lower())
     else:
         logger.error("Using " + shell_type + "Not supported to set shell functions.")
 
