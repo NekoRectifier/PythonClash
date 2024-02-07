@@ -4,3 +4,7 @@ pyyaml
 pygeoip
 urllib3
 tqdm
+
+# pygobj
+pycairo
+pygobject
