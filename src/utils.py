@@ -172,6 +172,7 @@ def init_perf(conf):
             # TODO: may have a problem here
             f_conf.write("{}")
     f_conf.close()
+    logger.debug("init perf end")
 
 
 urllib3.disable_warnings()

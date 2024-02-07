@@ -115,8 +115,10 @@ def update():
         if utils.perf.get("secret") is None:
             # default secret is 'admin'
             _secret = "admin"
+            utils.perf['secret'] = _secret
+            # TODO should be able to detect the changes from conf and applies to it
         else:
-            _secret: str = str(utils.perf.get("secret"))
+            _secret = str(utils.perf.get("secret"))
 
         # custom settings
         options: dict[str, str] = {
@@ -137,7 +139,7 @@ def update():
 
     else:
         # TODO: base64 config file support
-        logger.critical("downloaded config is corrupted!")
+        logger.critical("downloaded config is corrupted, retry update")
         exit(1)
     utils.save_perf()
 
@@ -172,11 +174,15 @@ def start():
                 + "/clash.log 2>&1 &",
                 shell=True,
             )
+            logger.info(
+                "\n\tClash core has started\n\tDashboard: https://metacubexd.pages.dev/#/overview" +
+                "\n\tSecret: " + utils.perf.get('secret')
+            )
         else:
             logger.warning("Other clash instance is already running, killing...")
             stop()
     else:
-        logger.critical("Clash binary at " + _mihomo_path + " is not exist, exiting!")
+        logger.critical("Clash binary at " + _mihomo_path + " is not exist, please rerun setup")
         exit(1)
 
 
