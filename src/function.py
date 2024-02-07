@@ -44,7 +44,18 @@ def setup():
         _mihomo_path: str = res.stdout.strip()
         logger.info("Mihomo binary detected at " + _mihomo_path)
         utils.perf["mihomo_path"] = _mihomo_path
-    except subprocess.CalledProcessError as e:
+
+        if not utils.has_executable_permission(_mihomo_path):
+            if os.getuid() != 0:
+                logger.error("Mihomo binary can't execute, rerun 'setup' with root privilege")
+            else:
+                try:
+                    logger.info("Setting binary exec permission...")
+                    subprocess.run("chmod +x " + _mihomo_path, shell=True)
+                except subprocess.CalledProcessError as e:
+                    logger.error(e)
+
+    except subprocess.CalledProcessError:
         logger.warning("mihomo binary does not exist")
         # starting mihomo binary download now
         _arch = utils.get_cpu_arch()
@@ -53,14 +64,21 @@ def setup():
         compress_path = os.path.join(conf_dir, "mihomo.gz")
         utils.vis_download(bin_url, compress_path)
 
+        target_mihomo_path = ""
+
         if os.getuid() == 0:
             logger.info("root permission acquired, mihomo binary will be installed in /usr/bin/mihomo")
-            utils.decompress_gzip_file(compress_path, "/usr/bin/mihomo")
-
+            target_mihomo_path = "/usr/bin/mihomo"
         else:
             logger.info("mihomo will be installed in ~/.local/share/bin/mihomo")
-            utils.decompress_gzip_file(compress_path,
-                                       os.path.join(os.path.expandvars('$HOME'), ".local/share/bin/mihomo"))
+            target_mihomo_path = os.path.join(os.path.expandvars('$HOME'), ".local/share/bin/mihomo")
+
+        utils.decompress_gzip_file(compress_path, target_mihomo_path)
+        try:
+            logger.info("Setting binary exec permission...")
+            subprocess.run("chmod +x " + target_mihomo_path, shell=True)
+        except subprocess.CalledProcessError as e:
+            logger.error(e)
 
     # 3. Release Script Files
     utils.release_script(_script_path)
@@ -87,7 +105,7 @@ def setup():
         logger.info("GeoIP Database exists already, checking its integrity...")
         utils.check_mmdb(_mmdb_path)
         logger.info("GeoIP DB  OK")
-    logger.info("PythonClash Setup finished")
+    logger.info("PythonClash setup ended")
     utils.save_perf()
 
 

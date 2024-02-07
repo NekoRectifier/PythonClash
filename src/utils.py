@@ -9,6 +9,7 @@ import pygeoip
 import json
 import urllib3
 from tqdm import tqdm
+import stat
 
 perf: dict[str, str] = {}
 
@@ -232,3 +233,11 @@ def modify_shell_conf(_path: str, shell_name: str):
         logger.info("Functions had been added to the shell config, skipping...")
     else:
         logger.error("Shell " + shell_name + " has no available config file, skipping...")
+
+
+def has_executable_permission(file_path):
+    # 获取文件的权限模式
+    file_mode = os.stat(file_path).st_mode
+    # 检查文件的用户执行权限
+    is_executable = bool(file_mode & stat.S_IXUSR)
+    return is_executable
