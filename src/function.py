@@ -133,6 +133,7 @@ def update():
         if utils.perf.get("secret") is None:
             # default secret is 'admin'
             _secret = "admin"
+            utils.perf["secret"] = _secret
         else:
             _secret: str = str(utils.perf.get("secret"))
 
@@ -190,6 +191,9 @@ def start():
                 + "/clash.log 2>&1 &",
                 shell=True,
             )
+            logger.info("\n\tClash core started successfully"
+                        "\n\tDashBoard: https://metacubexd.pages.dev/#/overview"
+                        "\n\tSecret: " + utils.perf.get("secret"))
         else:
             logger.warning("Other clash instance is already running, killing...")
             stop()
