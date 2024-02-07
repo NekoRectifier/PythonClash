@@ -155,7 +155,6 @@ def save_perf():
 def init_perf(conf):
     # used when conf.json is already exist
     global perf
-    logger.debug("initiating " + conf + "...")
 
     # using r+ to read & write while pointer is at head
     with open(conf, 'r+') as f_conf:
@@ -165,7 +164,6 @@ def init_perf(conf):
             logger.error(e.args)
             exit(1)
         try:
-            logger.debug("applying previous settings...")
             perf = json.loads(con)
             logger.info("Perf loaded")
         except json.decoder.JSONDecodeError:
