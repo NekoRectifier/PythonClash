@@ -14,14 +14,14 @@ parser.add_argument(
     type=str,
     help="attach your subscription url here to update your config.yaml"
 )
-parser.add_argument('command', choices=['set', 'get', 'setup', 'start', 'stop', 'update'],
-                    help="Command to execute")
-parser.add_argument('option', nargs='?', help='The option to use')
-parser.add_argument('value', nargs='?', help='The value to set')
+parser.add_argument('command',
+                    choices=['setup', 'start', 'stop', 'update', 'log', 'autostart', 'install'])
+# TODO implement "uninstall"
+parser.add_argument('option', nargs='?')
+# parser.add_argument('value', nargs='?', help='The value to set')
 
 # global vars
 _conf_dir: str = os.path.join(os.path.expandvars('$HOME'), '.config', 'PythonClash')
-
 
 if __name__ == "__main__":
     if not os.path.exists(_conf_dir):
@@ -57,26 +57,22 @@ if __name__ == "__main__":
 
     # cmd settings
     cmd = args.command
-    if cmd == 'set':
-        if not args.option or not args.value:
-            parser.error('Option and value are required for command "set"')
-        else:
-            logger.info(f'Setting {args.option} to {args.value}, effect at next time')
-            if args.option == "log":
-                utils.perf["log_level"] = str(args.value).capitalize()
-    elif cmd == 'get':
-        if not args.option:
-            parser.error('Option is required for "get"')
-        else:
-            print(args.option + " option is " + str(utils.perf.get(args.option)))
-
-    if args.url is not None:
-        # TODO: url connectivity check
-        logger.info("new subscribe url has been wrote to file")
-
     if cmd == 'update':
         function.update()
     elif cmd == 'setup':
         function.setup()
     elif cmd == 'start':
         function.start()
+
+    if cmd == 'autostart':
+        if args.option in ["true", "false"]:
+            utils.autostart(args.option)
+        else:
+            logger.error("Command 'autostart' only support true/false choices")
+            exit(1)
+    elif cmd == 'install':
+        utils.install()
+
+    if args.url is not None:
+        # TODO: url connectivity check
+        logger.info("new subscribe url has been wrote to file")

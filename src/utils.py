@@ -10,6 +10,7 @@ import json
 import urllib3
 from tqdm import tqdm
 import stat
+import shutil
 
 perf: dict[str, str] = {}
 
@@ -239,3 +240,48 @@ def has_executable_permission(file_path):
     # 检查文件的用户执行权限
     is_executable = bool(file_mode & stat.S_IXUSR)
     return is_executable
+
+
+def is_running_python_file():
+    current_file_path = os.path.abspath(__file__)
+    if current_file_path.endswith(".py"):
+        return True
+    else:
+        return False
+
+
+def autostart(choice: bool):
+    file_path = os.path.join(os.path.expandvars('$HOME'), '.config', 'autostart', 'pythonclash.desktop')
+
+    if is_running_python_file():
+        logger.error("Currently running with python file, autostart requires single executable file")
+        exit(1)
+    if os.getuid() != 0:
+        with open(file_path, 'w', encoding='UTF-8') as file:
+            if choice:
+                file.write("[Desktop Entry]\n")
+                file.write("Type=Application\n")
+                file.write("Exec=\n")
+                file.write("Hidden=false\n")
+                file.write("NoDisplay=false\n")
+                file.write("X-GNOME-Autostart-enabled=true\n")
+                file.write("PythonClash\n")
+            else:
+                file.write("\n")
+    else:
+        logger.error("Autostart do not need root privillage, exiting...")
+        exit(1)
+
+
+def install():
+    install_path = "/usr/local/bin/pclash"
+    if os.getuid() == 0:
+        if not is_running_python_file():
+            shutil.copyfile(__file__, install_path)
+            logger.info(f"Exec binary has been installed to {install_path}")
+        else:
+            logger.error("Currently running with python file, autostart requires single executable file")
+            exit(1)
+    else:
+        logger.error("Install requires root privillage")
+        exit(1)
